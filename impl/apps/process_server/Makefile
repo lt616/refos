@@ -26,7 +26,7 @@ CFILES   += $(patsubst $(SOURCE_DIR)/%,%,$(wildcard $(SOURCE_DIR)/src/arch/${ARC
 OFILES := archive.o
 
 # We want to run C99
-NK_CFLAGS += -std=gnu99 -O2
+NK_CFLAGS += -std=gnu99 -O2 -ffreestanding
 
 # Libraries required to build the target
 LIBS := c sel4 sel4muslcsys sel4allocman sel4platsupport sel4vka elf cpio refos sel4utils \

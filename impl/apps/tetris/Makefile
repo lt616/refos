@@ -16,7 +16,7 @@ TARGETS := tetris.bin
 # Source files required to build the target
 CFILES   := $(patsubst $(SOURCE_DIR)/%,%,$(wildcard $(SOURCE_DIR)/src/*.c))
 
-NK_CFLAGS += -D_BSD_SOURCE -O2
+NK_CFLAGS += -D_BSD_SOURCE -O2 -ffreestanding
 
 # Libraries required to build the target
 LIBS := c sel4 refossys refos datastruct

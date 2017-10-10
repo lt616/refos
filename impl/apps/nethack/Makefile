@@ -20,7 +20,7 @@ CFILES   += $(patsubst $(SOURCE_DIR)/%,%,$(wildcard $(SOURCE_DIR)/src/*/*/*.c))
 CFILES   += $(patsubst $(SOURCE_DIR)/%,%,$(wildcard $(SOURCE_DIR)/src/*/*/*/*.c))
 HDRFILES += $(wildcard ${SOURCE_DIR}/src/nethack-3.4.3/include/*)
 
-NK_CFLAGS += -D_BSD_SOURCE -O2
+NK_CFLAGS += -D_BSD_SOURCE -O2 -ffreestanding
 
 # Nethack configuration defines.
 NK_CFLAGS += -DTTY_GRAPHICS -DANSI_DEFAULT -DDLB -DNO_FILE_LINKS- -DDLBLIB

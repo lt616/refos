@@ -15,6 +15,9 @@ PATCHLEVEL = 0
 SUBLEVEL = 0
 EXTRAVERSION = 1
 
+CFLAGS ::= -ffreestanding
+export CFLAGS
+
 lib-dirs:=libs
 
 # The main target we want to generate

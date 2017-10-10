@@ -18,7 +18,7 @@ CFILES   := $(patsubst $(SOURCE_DIR)/%,%,$(wildcard $(SOURCE_DIR)/src/*.c))
 CFILES   += $(patsubst $(SOURCE_DIR)/%,%,$(wildcard $(SOURCE_DIR)/src/*/*.c))
 CFILES   += $(patsubst $(SOURCE_DIR)/%,%,$(wildcard $(SOURCE_DIR)/src/*/*/*.c))
 
-NK_CFLAGS += -O2
+NK_CFLAGS += -O2 -ffreestanding
 
 # Libraries required to build the target
 LIBS := c sel4 refossys refos datastruct platsupport utils
