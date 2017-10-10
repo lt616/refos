@@ -69,7 +69,7 @@
         <param type="seL4_CPtr" name="nameserv" mode="connect_ep"/>
         <param type="char*" name="path"/>
         <param type="int*" name="resolvedBytes" dir="out"/>
-        <param type="refos_err_t*" name="errno" dir="out"/>
+        <param type="refos_err_t*" name="_errno" dir="out"/>
     </function>
 
 </interface>

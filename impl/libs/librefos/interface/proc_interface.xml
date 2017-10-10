@@ -14,7 +14,11 @@
 
 <interface label_min='PROCSERV_METHODS_BASE' connect_ep='REFOS_PROCSERV_EP'>
     <include>refos/refos.h</include>
- 
+
+    <function name="benchmark" return="refos_err_t">
+
+    </function>
+
     <function name="proc_ping" return='refos_err_t'>
         ! @brief Ping the process server. Useful for debugging.
         @return ESUCCESS if success, refos_error error code otherwise.
@@ -29,9 +33,9 @@
         @param errno Variable to store error code in.
         @return Recieved cap if success, 0 otherwise.
 
-        <param type="refos_err_t*" name="errno" dir="out"/>
+        <param type="refos_err_t*" name="_errno" dir="out"/>
     </function>
-    
+
     <function name="proc_new_async_endpoint_internal" return='seL4_CPtr'>
         ! @brief Create a new asynchronous endpoint.
 
@@ -41,7 +45,7 @@
         @param errno Variable to store error code in.
         @return Recieved cap if success, 0 otherwise.
 
-        <param type="refos_err_t*" name="errno" dir="out"/>
+        <param type="refos_err_t*" name="_errno" dir="out"/>
     </function>
 
     <function name="proc_watch_client" return='refos_err_t'>
@@ -84,7 +88,7 @@
         <param type="uint32_t" name="size"/>
         <param type="uint32_t" name="permissions"/>
         <param type="uint32_t" name="flags"/>
-        <param type="refos_err_t*" name="errno" dir="out"/>
+        <param type="refos_err_t*" name="_errno" dir="out"/>
     </function>
 
     <function name="proc_resize_mem_window" return='refos_err_t'>
@@ -128,7 +132,7 @@
                 window otherwise. (Gives ownership)
 
         <param type="seL4_CPtr" name="window"/>
-        <param type="refos_err_t*" name="errno" dir="out"/>
+        <param type="refos_err_t*" name="_errno" dir="out"/>
     </function>
 
     <function name="proc_register_as_pager" return='refos_err_t'>
@@ -257,7 +261,7 @@
         <param type="seL4_Word" name="childStack"/>
         <param type="int" name="flags"/>
         <param type="seL4_Word" name="arg"/>
-        <param type="refos_err_t*" name="errno" dir="out"/>
+        <param type="refos_err_t*" name="_errno" dir="out"/>
     </function>
 
     <function name="proc_nice" return='refos_err_t'>

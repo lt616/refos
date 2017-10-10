@@ -12,6 +12,7 @@
 
 #include "dspace.h"
 #include "timer_dspace.h"
+#include <refos/error.h>
 
  /*! @file
      @brief Common dataspace interface functions.

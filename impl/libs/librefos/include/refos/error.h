@@ -15,6 +15,25 @@
 
 /* Include Kconfig variables. */
 #include <autoconf.h>
+#include <errno.h>
+
+typedef enum __refos_errors {
+	ESUCCESS = 0,
+	EINVALID = EHWPOISON + 1,
+	EUNKNOWNCLIENT,
+	EINVALIDPARAM,
+	ESERVERNOTFOUND,
+	EINVALIDWINDOW,
+	ESERVICEUNAVAILABLE,
+	EACCESSDENIED,
+	EUNMAPFIRST,
+	EFILENOTFOUND,
+	EENDOFFILE,
+	EDEVICENOTFOUND,
+	ENOPARAMBUFFER,
+	EUNIMPLEMENTED,
+	EDELEGATED
+} refos_err_t;
 
 /*! @file
     @brief RefOS Error codes.
@@ -22,69 +41,15 @@
     Shared error codes for RefOS methods.
 */
 
-enum refos_error {
-    /*! @brief There was no error. */
-    ESUCCESS = 0,
-    
-    /*! @brief Ran out of heap, cslots or untyped memory. */
-    ENOMEM,
-    
-    /*! @brief An internal error occured with the service. */
-    EINVALID,
-    
-    /*! @brief The given client capability is invalid. */
-    EUNKNOWNCLIENT,
-    
-    /*! @brief A given parameter was invalid. */
-    EINVALIDPARAM,
-    
-    /*! @brief The server name was not found by the naming service. */
-    ESERVERNOTFOUND,
-    
-    /*! @brief The given window capability is invalid. */
-    EINVALIDWINDOW,
-    
-    /*! @brief The server is currently unavailable; try again later. */
-    ESERVICEUNAVAILABLE,
-    
-    /*! @brief Insufficient permission for the requested operation. */
-    EACCESSDENIED,
-    
-    /*! @brief Occurs when a pager service tries to map a frame where there already is one. */
-    EUNMAPFIRST,
-    
-    /*! @brief The file name was not found on the dataspace server. */
-    EFILENOTFOUND,
-    
-    /*! @brief End of file was reached. */
-    EENDOFFILE,
-    
-    /*! @brief The device was not found on the system. */
-    EDEVICENOTFOUND,
-   
-    /*! @brief The operation requires access to the param buffer but no param buffer exists */
-    ENOPARAMBUFFER,
-
-    /*! @brief This feature has not been implemented. */
-    EUNIMPLEMENTED,
-
-    /*! @brief Request has been delegated to another server. */
-    EDELEGATED
-};
-
-#ifndef __defined_err_t__
-    typedef enum refos_error refos_err_t;
-    #define __defined_err_t__
-#endif
-
 /*! @brief Helper function which returns the associated string with a RefOS error number. Useful for
            printing debugging information.
     @param err The RefOS error.
     @return Static string containing the error variable enum name. (No ownership transfer)
 */
 static inline const char*
-refos_error_str(refos_err_t err)
+refos_error_str(refos_err_t _err)
 {
+    int err = (int)_err;
     switch (err) {
         case ESUCCESS:
             return "ESUCCESS";

@@ -20,7 +20,8 @@
 
 #include "device_timer.h"
 #include "state.h"
-#include <platsupport/timer.h>
+#include <platsupport/ltimer.h>
+#include <platsupport/irq.h>
 #include <platsupport/plat/timer.h>
 #include <refos-util/dprintf.h>
 #include <refos-util/device_io.h>
@@ -74,6 +75,10 @@
     #define TICK_TIMER_SCALE_NS 1
 
     #include <platsupport/plat/rtc.h>
+
+    ltimer_t pc99_ltimer;
+    ps_irq_t pc99_tickDev_irq;
+    ps_irq_t pc99_timerDev_irq;
 
 #else
     #error "Unsupported platform."
@@ -143,7 +148,7 @@ device_timer_handle_irq(void *cookie, uint32_t irq)
     assert(s && s->magic == TIMESERV_DEVICE_TIMER_MAGIC);
     assert(s->timerIRQPeriod > 0);
     s->cumulativeTime += s->timerIRQPeriod;
-    timer_handle_irq(s->timerDev, irq);
+    ltimer_handle_irq(s->timerDev, &pc99_timerDev_irq);
     device_timer_update_sleepers(s);
 }
 
@@ -160,7 +165,7 @@ device_tick_handle_irq(void *cookie, uint32_t irq)
 {
     struct device_timer_state *s = (struct device_timer_state *) cookie;
     assert(s && s->magic == TIMESERV_DEVICE_TIMER_MAGIC);
-    timer_handle_irq(s->tickDev, irq);
+    ltimer_handle_irq(s->tickDev, &pc99_tickDev_irq);
     device_timer_update_sleepers(s);
 }
 
@@ -196,6 +201,7 @@ device_timer_init_rtc(struct device_timer_state *s, dev_io_ops_t *io)
 void
 device_timer_init(struct device_timer_state *s, dev_io_ops_t *io)
 {
+    int error;
     assert(s && io);
     assert(!s->initialised);
 
@@ -258,8 +264,17 @@ device_timer_init(struct device_timer_state *s, dev_io_ops_t *io)
     s->tickDev = ps_get_timer(TICK_ID, &config);
 
 #elif defined(PLAT_PC99)
+    int reterr;
 
-    s->timerDev = pit_get_timer(&io->opsIO.io_port_ops);
+    reterr = ltimer_default_init(&pc99_ltimer, io->opsIO);
+    if (reterr != 0) {
+        printf("Failed to initialize platform LTimer instance: ret %d.\n",
+		reterr);
+
+	return;
+    }
+
+    s->timerDev = &pc99_ltimer;
     s->tickDev = s->timerDev;
 
 #endif
@@ -269,6 +284,15 @@ device_timer_init(struct device_timer_state *s, dev_io_ops_t *io)
         return;
     }
 
+#ifdef PLAT_PC99
+    /* Set up to recieve timer IRQs. */
+    for (uint32_t i = 0; i < ltimer_get_num_irqs(s->timerDev); i++) {
+        int irq = ltimer_get_nth_irq(s->timerDev, i, &pc99_timerDev_irq);
+        int error = dev_handle_irq(&timeServ.irqState, irq, device_timer_handle_irq, (void*) s);
+        assert(!error);
+        (void) error;
+    }
+#else
     /* Set up to recieve timer IRQs. */
     for (uint32_t i = 0; i < s->timerDev->properties.irqs; i++) {
         int irq = timer_get_nth_irq(s->timerDev, i);
@@ -276,7 +300,26 @@ device_timer_init(struct device_timer_state *s, dev_io_ops_t *io)
         assert(!error);
         (void) error;
     }
+#endif
 
+#ifdef PLAT_PC99
+    /* Set up to recieve tick timer IRQs. */
+    if (s->tickDev != NULL && s->tickDev != s->timerDev) {
+        for (uint32_t i = 0; i < ltimer_get_num_irqs(s->tickDev); i++) {
+            int irq = ltimer_get_nth_irq(s->tickDev, i, &pc99_tickDev_irq);
+            int error = dev_handle_irq(&timeServ.irqState, irq, device_tick_handle_irq, (void*) s);
+            assert(!error);
+            (void) error;
+        }
+
+/*        int error = timer_start(s->tickDev);
+        if (error) {
+            ROS_ERROR("Could not start tick timer.");
+            assert(!"Tick timer initialise but could not start.");
+            return;
+        } */
+    }
+#else
     /* Set up to recieve tick timer IRQs. */
     if (s->tickDev != NULL && s->tickDev != s->timerDev) {
         for (uint32_t i = 0; i < s->tickDev->properties.irqs; i++) {
@@ -293,21 +336,25 @@ device_timer_init(struct device_timer_state *s, dev_io_ops_t *io)
             return;
         }
     }
+#endif
 
     /* Read the RTC. */
     device_timer_init_rtc(s, io);
 
     /* Start the timer. */
-    int error = timer_start(s->timerDev);
+#if 0
+    error = timer_start(s->timerDev);
     if (error) {
         ROS_ERROR("Could not start timer.");
         assert(!"Timer initialise but could not start.");
         return;
     }
+#endif
 
     #if TIMER_PERIODIC_MAX_SET
     /* Set the timer for periodic overflow interrupts. */
-    error = timer_periodic(s->timerDev, TIMER_PERIODIC_MAX);
+    error = ltimer_set_timeout(s->timerDev, TIMER_PERIODIC_MAX,
+			       TIMEOUT_PERIODIC);
     if (error) {
         ROS_ERROR("Could not configure periodic timer.");
         assert(!"Could not set periodic timer.");
@@ -321,7 +368,8 @@ device_timer_init(struct device_timer_state *s, dev_io_ops_t *io)
        (see module description above).
     */
     if (s->tickDev != NULL) {
-        error = timer_periodic(s->tickDev, TICK_TIMER_PERIOD);
+        error = ltimer_set_timeout(s->tickDev, TICK_TIMER_PERIOD,
+				   TIMEOUT_PERIODIC);
         if (error) {
             ROS_WARNING("Could not set periodic tick timer.");
             assert(!"Could not set periodic tick timer.");
@@ -340,13 +388,18 @@ device_timer_init(struct device_timer_state *s, dev_io_ops_t *io)
 uint64_t
 device_timer_get_time(struct device_timer_state *s)
 {
+    uint64_t time;
+
     assert(s && s->magic == TIMESERV_DEVICE_TIMER_MAGIC);
-    uint64_t time = timer_get_time(s->timerDev);
+    int err = ltimer_get_time(s->timerDev, &time);
+    assert(err == 0);
+#ifndef PLAT_PC99
     if (!s->timerDev->properties.upcounter) {
         /* This is a downcounter timer. Invert the time. */
         assert(time <= s->timerIRQPeriod);
         time = s->timerIRQPeriod - time;
     }
+#endif
     time += s->cumulativeTime;
     return time * TICK_TIMER_SCALE_NS;
 }

@@ -12,4 +12,4 @@
 
 libs-$(CONFIG_LIB_DATA_STRUCT) += libdatastruct
 
-libdatastruct: common
+libdatastruct: libmuslc common

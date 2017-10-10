@@ -36,8 +36,9 @@ thread_config(struct proc_tcb *thread, uint8_t priority, vaddr_t entryPoint,
 
     /* Configure the thread object. */
     int error = sel4utils_configure_thread(
-            &procServ.vka, &procServ.vspace, &vspace->vspace, REFOS_PROCSERV_EP,
-            priority, vspace->cspace.capPtr, vspace->cspaceGuardData,
+            &procServ.vka, &procServ.vspace, &vspace->vspace,
+	    REFOS_PROCSERV_EP,
+            vspace->cspace.capPtr, vspace->cspaceGuardData,
             &thread->sel4utilsThread
     );
     if (error) {
@@ -47,6 +48,7 @@ thread_config(struct proc_tcb *thread, uint8_t priority, vaddr_t entryPoint,
         return EINVALID;
     }
 
+    seL4_TCB_SetPriority(thread->sel4utilsThread.tcb.cptr, priority);
     return ESUCCESS;
 }
 

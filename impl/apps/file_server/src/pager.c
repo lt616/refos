@@ -53,7 +53,8 @@ pager_init(struct fs_frame_block* fb, uint32_t framesSize)
     /* Initialise the anonymouse RAM dataspace to allocate from. */
     dprintf("        Creating pager frame block...\n");
     int error = EINVALID;
-    fb->dataspace = data_open(REFOS_PROCSERV_EP, "anon", O_CREAT | O_WRONLY  |O_TRUNC, O_RDWR,
+    fb->dataspace = data_open(REFOS_PROCSERV_EP, "anon",
+	O_CREAT | O_WRONLY  |O_TRUNC, O_RDWR,
         framesSize, &error);
     if (error != ESUCCESS || !fb->dataspace) {
         ROS_ERROR("page_init failed to open anon dataspace.");

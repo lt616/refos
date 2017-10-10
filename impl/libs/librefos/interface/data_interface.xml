@@ -43,7 +43,7 @@
         <param type="int" name="flags"/>
         <param type="int" name="mode"/>
         <param type="int" name="size"/>
-        <param type="int*" name="errno" dir='out'/>
+        <param type="int*" name="_errno" dir='out'/>
     </function>
 
     <function name="data_close" return='refos_err_t'>
